@@ -1,24 +1,31 @@
-#####################Plot 4
+# Load NEI and SCC data frames 
+NEI <- readRDS("summarySCC_PM25.rds")
+SCC <- readRDS("Source_Classification_Code.rds")
+
+#Across the United States, how have emissions from coal combustion-related 
+# sources changed from 1999 to 2008?
+
+# coal combustion related NEI data
+SCC.coal <- SCC[grepl("coal", SCC$Short.Name, ignore.case = TRUE), ]
+merge <- merge(x = NEI, y = SCC.coal, by = 'SCC')
+
+# Find total emissions by year from coal combustion-related sources
+merge.aggr<-aggregate(Emissions ~ year, merge, sum)
 
 
-#  Read Data 
-NEI <- readRDS("./exdata-data-NEI_data/summarySCC_PM25.rds")
-SRC <- readRDS("./exdata-data-NEI_dataSource_Classification_Code.rds")
+#Plot distribution of emissions as a function of year 
 
-#  Create Data
-CC <- grep("coal",SRC$EI.Sector,value=T,ignore.case=T)
-SRC.CC <- subset(SRC, SRC$EI.Sector %in% CC, select=SCC)
-NEI.CC <- subset(NEI, NEI$SCC %in%  SRC.CC$SCC)
-pd <- aggregate(NEI.CC[c("Emissions")], list(year = NEI.CC$year), sum)
+library(ggplot2)
+png("plot4.png",width=480,height=480)
 
-#  Create Plot
-png('plot4.png', width=480, height=480)
-p <- ggplot(pd, aes(x=year, y=Emissions)) +
-     geom_point(alpha=.3) +
-     geom_smooth(alpha=.2, size=1) +
-     ggtitle("Total PM2.5 Coal Combustion Emissions in the US")
+p <- ggplot(merge.aggr, aes(x=year, y=Emissions)) +
+        geom_smooth( method="loess") +
+        ggtitle("Total PM2.5 Emissions from Coal Combustion Sources") 
+        
 print(p)
-
-
 dev.off()
 
+
+# Emissions from coal-combustion related sources show slight decline
+# from 1999 to 2002, marginal increase from 2002 to 2005, and sharp decrease 
+# afterwards.

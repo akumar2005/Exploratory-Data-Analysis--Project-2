@@ -1,23 +1,31 @@
-#  Read Data 
-NEI <- readRDS("./exdata-data-NEI_data/summarySCC_PM25.rds")
-SRC <- readRDS("./exdata-data-NEI_data/Source_Classification_Code.rds")
+# Load NEI and SCC data frames 
+NEI <- readRDS("summarySCC_PM25.rds")
+SCC <- readRDS("Source_Classification_Code.rds")
 
+#How have emissions from motor vehicle sources changed from 
+#1999 - 2008 in Baltimore City?
 
+#Subset of Emission data for Baltimore city and for
+# Motor vehicles
 
-#  Create Data
-VEH <- grep("vehicle",SRC$EI.Sector,value=T,ignore.case=T)
-SRC.VEH <- subset(SRC, SRC$EI.Sector %in% VEH, select=SCC)
-BC <- subset(NEI, fips == "24510")
-NEI.VEH <- subset(BC, BC$SCC %in%  SRC.VEH$SCC)
-pd <- aggregate(NEI.VEH[c("Emissions")], list(year = NEI.VEH$year), sum)
+BaltiEmissions <- NEI[NEI$fips=="24510" & NEI$type=="ON-ROAD",]
 
+# Find total emissions by year 
+BaltiEmissionsAggr <- aggregate(Emissions ~ year, BaltiEmissions, sum)
 
-#  Create Plot
+#Plot distribution of total vehicle emissions as a function of year 
+# for Baltimore City
+
 library(ggplot2)
-png('plot5.png', width=480, height=480)
-plot(pd$year, pd$Emissions, type = "l", 
-     main = "Total Vehicle Emissions in Baltimore City",
-     xlab = "Year", ylab = "Emissions")
 
+png("plot5.png",width=480,height=480)
+p <- ggplot(BaltiEmissionsAggr, aes(x=year, y=Emissions)) +
+        geom_smooth( method="loess") +
+        ggtitle("Total Motor Vehicle Emissions by year in Baltimore City")
 
+print(p)
 dev.off()
+
+# Ans: Total vehicle PM2.5 emissions decreased sharply till 2002.
+# There was almost no appreciable change till 2005.
+# From 2005 to 2008, the emissions showed a decrease.
